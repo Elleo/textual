@@ -204,7 +204,7 @@ class TreeControl(Generic[NodeDataType], Widget):
 
     def watch_cursor_line(self, value: int) -> None:
         if self.show_cursor:
-            self.emit_no_wait(CursorMove(self, value + self.gutter.top))
+            self.emit_no_wait(CursorMove(self, value))
 
     async def add(
         self,
