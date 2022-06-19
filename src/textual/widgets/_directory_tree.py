@@ -30,11 +30,11 @@ class FileClick(Message, bubble=True):
 
 
 class DirectoryTree(TreeControl[DirEntry]):
-    def __init__(self, path: str, name: str = None) -> None:
+    def __init__(self, path: str, name: str = None, id: str | None = None, classes: str | None = None) -> None:
         self.path = path.rstrip("/")
         label = os.path.basename(self.path)
         data = DirEntry(path, True)
-        super().__init__(label, name=name, data=data)
+        super().__init__(label, name=name, data=data, id=id, classes=classes)
         self.root.tree.guide_style = "black"
 
     has_focus: Reactive[bool] = Reactive(False)
@@ -48,7 +48,7 @@ class DirectoryTree(TreeControl[DirEntry]):
     async def watch_hover_node(self, hover_node: NodeID) -> None:
         for node in self.nodes.values():
             node.tree.guide_style = (
-                "bold not dim red" if node.id == hover_node else "black"
+                "bold not dim red" if node.node_id == hover_node else "black"
             )
         self.refresh(layout=True)
 
@@ -58,7 +58,7 @@ class DirectoryTree(TreeControl[DirEntry]):
             node.data.is_dir,
             node.expanded,
             node.is_cursor,
-            node.id == self.hover_node,
+            node.node_id == self.hover_node,
             self.has_focus,
         )
 
@@ -73,8 +73,8 @@ class DirectoryTree(TreeControl[DirEntry]):
         has_focus: bool,
     ) -> RenderableType:
         meta = {
-            "@click": f"click_label({node.id})",
-            "tree_node": node.id,
+            "@click": f"click_label({node.node_id})",
+            "tree_node": node.node_id,
             "cursor": node.is_cursor,
         }
         label = Text(node.label) if isinstance(node.label, str) else node.label
@@ -130,6 +130,6 @@ if __name__ == "__main__":
 
     class TreeApp(App):
         async def on_mount(self, event: events.Mount) -> None:
-            await self.screen.dock(DirectoryTree("/Users/willmcgugan/projects"))
+            await self.screen.dock(DirectoryTree("/"))
 
     TreeApp(log_path="textual.log").run()

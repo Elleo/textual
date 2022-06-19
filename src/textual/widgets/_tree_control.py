@@ -35,7 +35,7 @@ class TreeNode(Generic[NodeDataType]):
         data: NodeDataType,
     ) -> None:
         self.parent = parent
-        self.id = node_id
+        self.node_id = node_id
         self._control = control
         self._tree = tree
         self.label = label
@@ -47,7 +47,7 @@ class TreeNode(Generic[NodeDataType]):
         self.children: list[TreeNode] = []
 
     def __rich_repr__(self) -> rich.repr.Result:
-        yield "id", self.id
+        yield "node_id", self.node_id
         yield "label", self.label
         yield "data", self.data
 
@@ -65,7 +65,7 @@ class TreeNode(Generic[NodeDataType]):
 
     @property
     def is_cursor(self) -> bool:
-        return self.control.cursor == self.id and self.control.show_cursor
+        return self.control.cursor == self.node_id and self.control.show_cursor
 
     @property
     def tree(self) -> Tree:
@@ -151,7 +151,7 @@ class TreeNode(Generic[NodeDataType]):
         await self.expand(not self._expanded)
 
     async def add(self, label: TextType, data: NodeDataType) -> None:
-        await self._control.add(self.id, label, data=data)
+        await self._control.add(self.node_id, label, data=data)
         self._control.refresh(layout=True)
         self._empty = False
 
@@ -176,20 +176,22 @@ class TreeControl(Generic[NodeDataType], Widget):
         data: NodeDataType,
         *,
         name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
         padding: PaddingDimensions = (1, 1),
     ) -> None:
         self.data = data
 
-        self.id = NodeID(0)
+        self.node_id = NodeID(0)
         self.nodes: dict[NodeID, TreeNode[NodeDataType]] = {}
         self._tree = Tree(label)
         self.root: TreeNode[NodeDataType] = TreeNode(
-            None, self.id, self, self._tree, label, data
+            None, self.node_id, self, self._tree, label, data
         )
 
         self._tree.label = self.root
-        self.nodes[NodeID(self.id)] = self.root
-        super().__init__(name=name)
+        self.nodes[NodeID(self.node_id)] = self.root
+        super().__init__(name=name, id=id, classes=classes)
         self.padding = padding
 
     hover_node: Reactive[NodeID | None] = Reactive(None)
@@ -211,14 +213,14 @@ class TreeControl(Generic[NodeDataType], Widget):
         data: NodeDataType,
     ) -> None:
         parent = self.nodes[node_id]
-        self.id = NodeID(self.id + 1)
+        self.node_id = NodeID(self.node_id + 1)
         child_tree = parent._tree.add(label)
         child_node: TreeNode[NodeDataType] = TreeNode(
-            parent, self.id, self, child_tree, label, data
+            parent, self.node_id, self, child_tree, label, data
         )
         parent.children.append(child_node)
         child_tree.label = child_node
-        self.nodes[self.id] = child_node
+        self.nodes[self.node_id] = child_node
 
         self.refresh(layout=True)
 
@@ -240,7 +242,7 @@ class TreeControl(Generic[NodeDataType], Widget):
             except StopIteration:
                 continue
             else:
-                if node.id == node_id:
+                if node.node_id == node_id:
                     return line
                 line += 1
                 push(iter_children)
@@ -257,14 +259,14 @@ class TreeControl(Generic[NodeDataType], Widget):
             if isinstance(node.label, str)
             else node.label
         )
-        if node.id == self.hover_node:
+        if node.node_id == self.hover_node:
             label.stylize("underline")
-        label.apply_meta({"@click": f"click_label({node.id})", "tree_node": node.id})
+        label.apply_meta({"@click": f"click_label({node.node_id})", "tree_node": node.node_id})
         return label
 
     async def action_click_label(self, node_id: NodeID) -> None:
         node = self.nodes[node_id]
-        self.cursor = node.id
+        self.cursor = node.node_id
         self.cursor_line = self.find_cursor() or 0
         self.show_cursor = False
         await self.post_message(TreeClick(self, node))
@@ -296,7 +298,7 @@ class TreeControl(Generic[NodeDataType], Widget):
         next_node = cursor_node.next_node
         if next_node is not None:
             self.cursor_line += 1
-            self.cursor = next_node.id
+            self.cursor = next_node.node_id
 
     async def cursor_up(self) -> None:
         if not self.show_cursor:
@@ -306,7 +308,7 @@ class TreeControl(Generic[NodeDataType], Widget):
         previous_node = cursor_node.previous_node
         if previous_node is not None:
             self.cursor_line -= 1
-            self.cursor = previous_node.id
+            self.cursor = previous_node.node_id
 
 
 if __name__ == "__main__":
