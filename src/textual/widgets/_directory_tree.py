@@ -13,20 +13,10 @@ from .. import events
 from ..message import Message
 from ..reactive import Reactive
 from .._types import MessageTarget
-from . import TreeControl, TreeClick, TreeNode, NodeID
-
-
-@dataclass
-class DirEntry:
-    path: str
-    is_dir: bool
-
-
-@rich.repr.auto
-class FileClick(Message, bubble=True):
-    def __init__(self, sender: MessageTarget, path: str) -> None:
-        self.path = path
-        super().__init__(sender)
+from ._tree_control import TreeControl, TreeNode
+from ._tree_click import TreeClick
+from ._tree_node import TreeNode, NodeID
+from . import DirEntry, FileClick
 
 
 class DirectoryTree(TreeControl[DirEntry]):

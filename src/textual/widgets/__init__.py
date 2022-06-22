@@ -19,6 +19,10 @@ __all__ = [
     "Placeholder",
     "Static",
     "TreeControl",
+    "TreeNode",
+    "TreeClick",
+    "FileClick",
+    "DirEntry"
 ]
 
 
